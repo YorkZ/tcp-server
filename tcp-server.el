@@ -61,16 +61,8 @@
   (delete-process (format "tcp-server - %d" port)))
 
 (defun tcp-server-filter (proc string)
-  (let ((proc-contact (process-contact proc t))
-        (client (assoc proc tcp-server-clients))
-        message index)
-    (setq message (concat (cdr client) string))
-    (while (setq index (string-match "\n" message))
-      (setq index (1+ index))
-      (with-current-buffer (plist-get proc-contact :buffer)
-        (insert (substring message 0 index)))
-      (setq message (substring message index)))
-    (setcdr client message)))
+  (with-current-buffer (process-contact proc :buffer)
+    (insert string)))
 
 (defun tcp-server-sentinel (proc msg)
   (cond
