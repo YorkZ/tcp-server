@@ -39,7 +39,7 @@
   "Start a TCP server listening at PORT"
   (interactive
    (list (read-number "Enter the port number to listen to: " 9999)))
-  (let* ((proc-name (format "tcp-server - %d" port))
+  (let* ((proc-name (format "tcp-server:%d" port))
          (buffer-name (format "*%s*" proc-name)))
     (unless (process-status proc-name)
       (make-network-process :name proc-name :buffer buffer-name
@@ -58,20 +58,21 @@
   (while  tcp-server-clients
     (delete-process (car (car tcp-server-clients)))
     (setq tcp-server-clients (cdr tcp-server-clients)))
-  (delete-process (format "tcp-server - %d" port)))
+  (delete-process (format "tcp-server:%d" port)))
 
 (defun tcp-server-filter (proc string)
   (with-current-buffer (process-contact proc :buffer)
+    (goto-char (point-max))
     (insert string)))
 
 (defun tcp-server-sentinel (proc msg)
   (cond
    ((string-match "open from .*\n" msg)
     (setq tcp-server-clients (push (cons proc "") tcp-server-clients))
-    (tcp-server-log proc "client connected"))
+    (tcp-server-log proc "client connected\n"))
    ((string= msg "connection broken by remote peer\n")
     (setq tcp-server-clients (assq-delete-all proc tcp-server-clients))
-    (tcp-server-log proc "client has quit"))))
+    (tcp-server-log proc "client has quit\n"))))
 
 (defun tcp-server-log (client string)
   "If a server buffer exists, write STRING to it for logging purposes."
@@ -79,8 +80,7 @@
     (when server-buffer
       (with-current-buffer server-buffer
         (goto-char (point-max))
-        (insert (current-time-string) (format " %s: " client) string)
-        (or (bolp) (newline))))))
+        (insert (current-time-string) (format " %s: " client) string)))))
 
 
 (provide 'tcp-server)
