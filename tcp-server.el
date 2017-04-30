@@ -37,6 +37,14 @@
 (defvar tcp-server-servers '()
   "Alist where KEY is the port number the server is listening at")
 
+(defun tcp-server-process-name (port)
+  "Return server name of the process listening on PORT"
+  (format "tcp-server:%d" port))
+
+(defun tcp-server-get-process (port)
+  "Return the server process that is listening on PORT"
+  (get-process (tcp-server-process-name port)))
+
 (defun tcp-server-delete-clients (server-proc)
   (let ((server-proc-name (process-contact server-proc :name)))
     (cl-loop for client in tcp-server-clients
@@ -54,7 +62,7 @@
   "Start a TCP server listening at PORT"
   (interactive
    (list (read-number "Enter the port number to listen to: " 9999)))
-  (let* ((proc-name (format "tcp-server:%d" port))
+  (let* ((proc-name (tcp-server-process-name port))
          (buffer-name (format "*%s*" proc-name)))
     (unless (process-status proc-name)
       (make-network-process :name proc-name :buffer buffer-name
@@ -71,7 +79,7 @@
   (interactive
    (list (read-number "Enter the port number the server is listening to: "
                       9999)))
-  (let ((server-proc (get-process (format "tcp-server:%d" port))))
+  (let ((server-proc (tcp-server-get-process port)))
     (tcp-server-delete-clients server-proc)
     (delete-process server-proc)))
 
