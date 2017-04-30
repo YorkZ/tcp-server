@@ -48,14 +48,15 @@
                             :filter 'tcp-server-filter :server 't)
       ;; (push (cons port buffer-name) tcp-server-servers)
       (with-current-buffer buffer-name (text-mode))
-      (setq tcp-server-clients '()))))
+      (setq tcp-server-clients '()))
+    (display-buffer buffer-name)))
 
 (defun tcp-server-stop (port)
   "Stop an emacs TCP server at PORT"
   (interactive
    (list (read-number "Enter the port number the server is listening to: "
                       9999)))
-  (while  tcp-server-clients
+  (while tcp-server-clients
     (delete-process (car (car tcp-server-clients)))
     (setq tcp-server-clients (cdr tcp-server-clients)))
   (delete-process (format "tcp-server:%d" port)))
