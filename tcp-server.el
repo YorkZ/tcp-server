@@ -37,6 +37,11 @@
 (defvar tcp-server-servers '()
   "Alist where KEY is the port number the server is listening at")
 
+(defvar tcp-server-display-buffer-on-update nil
+  "If non-nil, force the process buffer to be visible whenever
+new text arrives")
+(make-variable-buffer-local 'tcp-server-display-buffer-on-update)
+
 (defun tcp-server-process-name (port)
   "Return server name of the process listening on PORT"
   (format "tcp-server:%d" port))
@@ -44,6 +49,10 @@
 (defun tcp-server-get-process (port)
   "Return the server process that is listening on PORT"
   (get-process (tcp-server-process-name port)))
+
+(defun tcp-server-process-buffer (port)
+  "Return buffer of the server process that is listening on PORT"
+  (process-contact (tcp-server-get-process port) :buffer))
 
 (defun tcp-server-delete-clients (server-proc)
   (let ((server-proc-name (process-contact server-proc :name)))
@@ -58,7 +67,8 @@
                                    (process-contact client :name)))
                         tcp-server-clients))))
 
-(defun tcp-server-start (port)
+(cl-defun tcp-server-start (port &optional (display-buffer-on-update nil)
+                                 (buffer-major-mode 'text-mode))
   "Start a TCP server listening at PORT"
   (interactive
    (list (read-number "Enter the port number to listen to: " 9999)))
@@ -69,8 +79,9 @@
                             :family 'ipv4 :service port
                             :sentinel 'tcp-server-sentinel
                             :filter 'tcp-server-filter :server 't)
-      ;; (push (cons port buffer-name) tcp-server-servers)
-      (with-current-buffer buffer-name (text-mode))
+      (with-current-buffer buffer-name
+        (funcall buffer-major-mode)
+        (setq tcp-server-display-buffer-on-update display-buffer-on-update))
       (setq tcp-server-clients '()))
     (display-buffer buffer-name)))
 
@@ -88,6 +99,8 @@
         (inhibit-read-only t))
     (and buffer (get-buffer buffer)
          (with-current-buffer buffer
+           (when tcp-server-display-buffer-on-update
+             (display-buffer buffer))
            (let ((moving (= (point) (point-max))))
              (save-excursion
                (goto-char (point-max))
