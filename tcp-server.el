@@ -78,12 +78,13 @@
 (defun tcp-server-filter (proc string)
   (let ((buffer (process-contact proc :buffer))
         (inhibit-read-only t))
-    (and buffer
-         (get-buffer buffer)
+    (and buffer (get-buffer buffer)
          (with-current-buffer buffer
-           (save-excursion
-             (goto-char (point-max))
-             (insert string))))))
+           (let ((moving (= (point) (point-max))))
+             (save-excursion
+               (goto-char (point-max))
+               (insert string))
+             (if moving (goto-char (point-max))))))))
 
 (defun tcp-server-sentinel (proc msg)
   (cond
