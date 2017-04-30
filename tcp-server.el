@@ -75,7 +75,7 @@
     (tcp-server-delete-clients server-proc)
     (delete-process server-proc)))
 
-(defun tcp-server-filter (proc string)
+(defun tcp-server-append-to-proc-buffer (proc string)
   (let ((buffer (process-contact proc :buffer))
         (inhibit-read-only t))
     (and buffer (get-buffer buffer)
@@ -85,6 +85,9 @@
                (goto-char (point-max))
                (insert string))
              (if moving (goto-char (point-max))))))))
+
+(defun tcp-server-filter (proc string)
+  (tcp-server-append-to-proc-buffer proc string))
 
 (defun tcp-server-sentinel (proc msg)
   (cond
@@ -99,11 +102,10 @@
 
 (defun tcp-server-log (client string)
   "If a server buffer exists, write STRING to it for logging purposes."
-  (let ((server-buffer (process-contact client :buffer)))
-    (when server-buffer
-      (with-current-buffer server-buffer
-        (goto-char (point-max))
-        (insert (current-time-string) (format " %s: " client) string)))))
+  (tcp-server-append-to-proc-buffer client
+                                    (format "%s %s: %s"
+                                            (current-time-string)
+                                            client string)))
 
 
 (provide 'tcp-server)
