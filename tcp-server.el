@@ -29,11 +29,26 @@
 ;;
 ;;; Code:
 
+(require 'cl-lib)
+
 (defvar tcp-server-clients '()
   "Alist where KEY is a client process and VALUE is the string")
 
 (defvar tcp-server-servers '()
   "Alist where KEY is the port number the server is listening at")
+
+(defun tcp-server-delete-clients (server-proc)
+  (let ((server-proc-name (process-contact server-proc :name)))
+    (cl-loop for client in tcp-server-clients
+             if (string= server-proc-name (process-contact client :name))
+             do
+             (delete-process client)
+             (message "Deleted client process %s" client))
+    (setq tcp-server-clients
+          (cl-delete-if (lambda (client)
+                          (string= (process-contact server-proc :name)
+                                   (process-contact client :name)))
+                        tcp-server-clients))))
 
 (defun tcp-server-start (port)
   "Start a TCP server listening at PORT"
@@ -56,10 +71,9 @@
   (interactive
    (list (read-number "Enter the port number the server is listening to: "
                       9999)))
-  (while tcp-server-clients
-    (delete-process (car (car tcp-server-clients)))
-    (setq tcp-server-clients (cdr tcp-server-clients)))
-  (delete-process (format "tcp-server:%d" port)))
+  (let ((server-proc (get-process (format "tcp-server:%d" port))))
+    (tcp-server-delete-clients server-proc)
+    (delete-process server-proc)))
 
 (defun tcp-server-filter (proc string)
   (let ((buffer (process-contact proc :buffer))
@@ -74,11 +88,13 @@
 (defun tcp-server-sentinel (proc msg)
   (cond
    ((string-match "open from .*\n" msg)
-    (setq tcp-server-clients (push (cons proc "") tcp-server-clients))
+    (push proc tcp-server-clients)
     (tcp-server-log proc "client connected\n"))
    ((string= msg "connection broken by remote peer\n")
-    (setq tcp-server-clients (assq-delete-all proc tcp-server-clients))
-    (tcp-server-log proc "client has quit\n"))))
+    (setq tcp-server-clients (cl-delete proc tcp-server-clients))
+    (tcp-server-log proc "client has quit\n"))
+   ((eq (process-status proc) 'closed)
+    (tcp-server-delete-clients proc))))
 
 (defun tcp-server-log (client string)
   "If a server buffer exists, write STRING to it for logging purposes."
