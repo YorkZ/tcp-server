@@ -1,6 +1,6 @@
 ;;; echo-server.el --- -*- lexical-binding: t -*-
 ;;
-;; Copyright (C) 2016 York Zhao <gtdplatform@gmail.com>
+;; Copyright (C) 2016-2017 York Zhao <gtdplatform@gmail.com>
 
 ;; Author: York Zhao <gtdplatform@gmail.com>
 ;; Created: June 1, 2016
@@ -61,9 +61,14 @@
   (delete-process (format "tcp-server:%d" port)))
 
 (defun tcp-server-filter (proc string)
-  (with-current-buffer (process-contact proc :buffer)
-    (goto-char (point-max))
-    (insert string)))
+  (let ((buffer (process-contact proc :buffer))
+        (inhibit-read-only t))
+    (and buffer
+         (get-buffer buffer)
+         (with-current-buffer buffer
+           (save-excursion
+             (goto-char (point-max))
+             (insert string))))))
 
 (defun tcp-server-sentinel (proc msg)
   (cond
