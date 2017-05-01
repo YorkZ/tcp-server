@@ -42,13 +42,13 @@
 new text arrives")
 (make-variable-buffer-local 'tcp-server-display-buffer-on-update)
 
-(defun tcp-server-process-name (port)
+(defun tcp-server-make-process-name (port)
   "Return server name of the process listening on PORT"
   (format "tcp-server:%d" port))
 
 (defun tcp-server-get-process (port)
   "Return the server process that is listening on PORT"
-  (get-process (tcp-server-process-name port)))
+  (get-process (tcp-server-make-process-name port)))
 
 (defun tcp-server-process-buffer (port)
   "Return buffer of the server process that is listening on PORT"
@@ -72,7 +72,7 @@ new text arrives")
   "Start a TCP server listening at PORT"
   (interactive
    (list (read-number "Enter the port number to listen to: " 9999)))
-  (let* ((proc-name (tcp-server-process-name port))
+  (let* ((proc-name (tcp-server-make-process-name port))
          (buffer-name (format "*%s*" proc-name)))
     (unless (process-status proc-name)
       (make-network-process :name proc-name :buffer buffer-name
