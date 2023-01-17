@@ -1,6 +1,6 @@
 ;;; echo-server.el --- -*- lexical-binding: t -*-
 ;;
-;; Copyright (C) 2016-2017 York Zhao <gtdplatform@gmail.com>
+;; Copyright (C) 2016-2023 York Zhao <gtdplatform@gmail.com>
 
 ;; Author: York Zhao <gtdplatform@gmail.com>
 ;; Created: June 1, 2016
@@ -67,6 +67,7 @@ new text arrives")
                                    (process-contact client :name)))
                         tcp-server-clients))))
 
+;;;###autoload
 (cl-defun tcp-server-start (port &optional (display-buffer-on-update nil)
                                  (buffer-major-mode 'text-mode))
   "Start a TCP server listening at PORT"
@@ -85,6 +86,7 @@ new text arrives")
       (setq tcp-server-clients '()))
     (display-buffer buffer-name)))
 
+;;;###autoload
 (defun tcp-server-stop (port)
   "Stop an emacs TCP server at PORT"
   (interactive
